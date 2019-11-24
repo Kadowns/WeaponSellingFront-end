@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+<img alt="" align="right" src="images.jpg" width="800" height="600" /> 
+  <head>
+    <meta charset="UTF-8">
+    <title>Front-end</title>
+    <script language="javascript" type="text/javascript" src="./web3.min.js"></script></script>
+    <script language="javascript" type="text/javascript" src="./abi.js"></script>
+	<script language="javascript" type="text/javascript" src="./abiToken.js"></script>
+	<script type="text/javascript">
+	
+        var myContract;
+		var RicardoTokenContract;
+
+		var userAccount;
+		
+		var web3js;
+		
+		
+      	function startApp() {
+        	var address = "0xf70Bdb8DA48c748Bb847D22165C75EdE50263FAa";
+			var tokenAddress = "0x9e17AB4Eaf0Cf0b44b9f540D7Fc57b741EF22b43";
+			
+        	//myContract = web3js.eth.contract(abi, address);
+        	myContract = new web3js.eth.Contract(abi, address);
+			RicardoTokenContract = new web3js.eth.Contract(abiToken, tokenAddress);
+        	
+            web3.eth.getAccounts(function(error, accounts) {
+                userAccount = accounts[0];
+                if (typeof userAccount !== 'undefined'){
+					console.log('userAccount Detected');
+                }else{
+                    console.log('No userAccount Detected... ERROR!!!')
+					console.log(error)
+                }
+            });
+            
+      	}
+      
+      	
+      	function getWeaponDetails(id) {
+  			return myContract.methods.weapons(id).call()
+		}
+    
+    window.addEventListener('load', async () => {
+        // Modern dapp browsers...
+        if (window.ethereum) {
+            window.web3 = new Web3(ethereum);
+            try {
+                // Request account access if needed
+                await ethereum.enable();
+                web3js = new Web3(web3.currentProvider);
+                            
+            } catch (error) {
+                // User denied account access...
+            }
+        }
+        // Legacy dapp browsers...
+        else if (window.web3) {
+            window.web3 = new Web3(web3.currentProvider);
+            // Acccounts always exposed
+        }
+        // Non-dapp browsers...
+        else {
+            console.log('Non-Ethereum browser detected. You should consider trying MetaMask!');
+        }
+        startApp()
+    });
+        
+        
+        function pay(){
+			var address1 = document.getElementById("pay_from").value
+			var address2 = document.getElementById("pay_to").value
+			var transfToken = document.getElementById("pay_amount").value
+			
+			RicardoTokenContract.methods.pay(address1,address2,transfToken).send({from: userAccount})
+		}
+		
+		function buyWeapon(){
+			var addressB = document.getElementById("buyWeapon_buyer").value
+			var addressS = document.getElementById("buyWeapon_seller").value
+			var weaponS = document.getElementById("buyWeapon_id").value
+			
+			//ethereum.enable();
+			myContract.methods.buyWeaponFrom(addressB,addressS,weaponS).send({from: userAccount, gas: 8000000})
+		}
+        function createWeapon(){
+			var weaponBuy = document.getElementById("createWeapon_name").value
+			//var weaponColor = document.getElementById("weaponColor").value
+        	if (typeof userAccount !== 'undefined') {
+                myContract.methods.createRandomWeapon(weaponBuy).send({ from: userAccount, value: web3js.utils.toWei("0.001", "ether") })
+				//myContract.methods.createRandomWeapon(weaponColor).send({ from: userAccount, value: web3js.utils.toWei("0.001", "ether") })
+				
+            }else{
+                console.log('No userAccount Detected... ERROR!!!')
+            }
+        	
+        }
+		function mixWeapon(){
+            var weapon1 = document.getElementById("mixWeapon_id1").value
+            var weapon2 = document.getElementById("mixWeapon_id2").value
+            var weaponName = document.getElementById("mixWeapon_name").value
+
+            myContract.methods.mixWeaponDna(weaponName, weapon1, weapon2).send({from: userAccount})
+        }
+		
+		function getWeaponId(){
+			var id = document.getElementById("getWeaponId_id").value
+			myContract.methods.weapons(id).call().then(function(result) {
+			console.log("0: " + JSON.stringify(result));
+			document.getElementById("getWeaponId_output").innerHTML = result.name;
+		});
+	}
+    	
+    </script>
+  </head>
+  <body>
+ <h2>TP2- Model 2</h2>
+
+<form>
+ <b> Pay:</b><br>
+  <input type="text" id = "pay_from" value="from">
+  <br>
+  <input type="text" id = "pay_to" value="to">
+  <br>
+  <input type="text" id = "pay_amount" value="value">
+  <br>
+  <button type="button" onClick="pay();">Transfer</button>
+</form> 
+
+<form>
+<br>
+  <b>Create new Weapon:</b><br>
+  <input type="text" id = "createWeapon_name" value="Name">
+  <br>
+  <button type="button" onClick="createWeapon();">Create</button>
+</form> 
+
+<form>
+<br>
+  <b>Mix Weapon:</b><br>
+  <input type="text" id = "mixWeapon_id1" value="Weapon ID 1">
+  <br>
+  <input type="text" id = "mixWeapon_id2" value="Weapon ID 2">
+  <br>
+  <input type="text" id = "mixWeapon_name" value="Name">
+  <br>
+  <button type="button" onClick="mixWeapon();">Mix</button>
+</form>
+
+<form>
+<br>
+  <b>Sell/Buy:</b><br>
+  <input type="text" id = "buyWeapon_buyer" value="Buyer">
+  <br>
+  <input type="text" id = "buyWeapon_seller" value="Seller">
+  <br>
+  <input type="text" id = "buyWeapon_id" value="Weapon ID">
+  <br>
+  <button type="button" onClick="buyWeapon();">Sell/Buy</button>
+</form>
+
+<form>
+<br>
+  <b>Get Weapon ID:</b><br>
+  <input type="text" id = "getWeaponId_id" value="Id weapon">
+  <br>
+  <button type="button" onClick="getWeaponId();">Get</button>
+  <br>
+  <p id = "getWeaponId_output"></p>
+</form>
+
+  </body>
+</html>
